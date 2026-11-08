@@ -32,6 +32,8 @@ h1{margin:0;text-align:center;font-family:'Cormorant Garamond',Georgia,serif;fon
 .shadow{position:absolute;left:8%;right:8%;bottom:-5%;height:13%;border-radius:50%;background:radial-gradient(ellipse,rgba(150,25,60,.5),transparent 72%)}
 .card{position:absolute;inset:0;perspective:900px;cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent}
 .tilt,.inner{position:absolute;inset:0;transform-style:preserve-3d}
+.inner{transition:transform .85s cubic-bezier(.45,.05,.25,1)}
+.card.open .inner{transform:rotateY(180deg)}
 .face{position:absolute;inset:0;border-radius:13%;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;container-type:inline-size;
   box-shadow:0 2px 3px rgba(150,25,60,.2),0 12px 18px rgba(150,25,60,.16),inset 0 1.5px 0 #fff}
 .face::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
@@ -96,7 +98,7 @@ body::after{content:'';position:fixed;left:-10%;right:-10%;bottom:-40px;height:1
  
 }
 .mbtn.off::after{content:"";position:absolute;left:12px;right:12px;top:23px;height:2.5px;border-radius:2px;background:var(--red2);transform:rotate(-35deg)}
-@media (prefers-reduced-motion:reduce){.bokeh{display:none}}
+@media (prefers-reduced-motion:reduce){.bokeh{display:none}.inner{transition-duration:.01s}}
 </style>
 </head>
 <body>
@@ -180,7 +182,7 @@ for(let i=0;i<16;i++){
     shine:q('.shine'),ey:qa('.ey'),hy:qa('.hy'),ll:q('.ll'),lr:q('.lr'),tl:q('.tl'),tr:q('.tr'),kn:q('.kn'),rv:qa('.rv'),faces:qa('.face'),open:false,busy:false,hover:false};
   all.push(c);
   gsap.set(c.rv,{autoAlpha:0});
-  gsap.set(c.inner,{rotationY:0});
+  
 
   /* sürekli "beni aç" hareketi */
   if(!RM){
@@ -188,7 +190,7 @@ for(let i=0;i<16;i++){
     c.idle.progress(Math.random());
     const blink=()=>gsap.to(c.ey,{scaleY:.1,duration:.07,yoyo:true,repeat:1,onComplete:()=>gsap.delayedCall(2+Math.random()*4,blink)});
     gsap.delayedCall(Math.random()*4,blink);
-    if(!SM())c.float=gsap.fromTo(c.tilt,{y:3},{y:-4,duration:1.8+Math.random()*1.2,yoyo:true,repeat:-1,ease:'sine.inOut'}).progress(Math.random());
+    
     gsap.fromTo(c.shine,{xPercent:-260},{xPercent:260,duration:1.3,ease:'power2.inOut',repeat:-1,repeatDelay:2.5+Math.random()*4,delay:Math.random()*5});
   }
 
@@ -201,7 +203,7 @@ for(let i=0;i<16;i++){
      .to(c.tl,{x:-7,y:13,rotation:22,svgOrigin:'46 52',duration:1,ease:'elastic.out(1,.35)'},.12)
      .to(c.tr,{x:7,y:13,rotation:-22,svgOrigin:'54 52',duration:1,ease:'elastic.out(1,.35)'},.12);
     c.untie=u;
-    const qx=gsap.quickTo(c.tilt,'rotationY',{duration:.5,ease:'power3'}),qy=gsap.quickTo(c.tilt,'rotationX',{duration:.5,ease:'power3'});
+    const qx=()=>{},qy=()=>{};
     c.card.addEventListener('pointerenter',()=>{
       c.hover=true;c.cell.style.zIndex=4;if(!c.open){gsap.to(c.ey,{opacity:0,duration:.1});gsap.to(c.hy,{opacity:1,duration:.15});hearts(c,4,false);}
       if(!c.open){u.timeScale(1).play();c.idle&&gsap.to(c.idle,{timeScale:0,duration:.3});
@@ -285,19 +287,19 @@ addEventListener('resize',()=>{if(!lbC||lbC.busy||!lbAR)return;const{iw,ih,txt}=
 
 function toggle(c){
   if(c.busy)return;c.busy=true;
-  const opening=!c.open;c.open=opening;opening?sfxOpen():sfxClose();
+  const opening=!c.open;c.open=opening;c.card.classList.toggle('open',opening);opening?sfxOpen():sfxClose();
   c.cell.style.zIndex=5;
   const D=RM?.01:1;
   if(c.untie){c.untie.pause();if(!opening)c.untie.progress(0)}
-  all.forEach(o=>o.idle&&o.idle.pause());c.inner.style.willChange='transform';gsap.to(c.tilt,{y:0,duration:.3});c.float&&(opening?c.float.pause():c.float.resume());
+  all.forEach(o=>o.idle&&o.idle.pause());c.inner.style.willChange='transform';c.float&&(opening?c.float.pause():c.float.resume());
   c.wob&&c.wob.kill();
   const tl=gsap.timeline({onComplete:()=>{c.busy=false;c.cell.style.zIndex='';c.inner.style.willChange='';all.forEach(o=>o.idle&&!o.hover&&o.idle.resume());
     if(!opening){c.untie&&c.untie.progress(0);c.idle&&c.idle.timeScale(1)}}});
   tl.to(c.card,{rotation:0,scale:1,y:0,duration:.2*D,ease:'power2.out'},'lift')
     
     
-    .to(c.inner,{rotationY:opening?180:0,duration:.8*D,ease:'power2.inOut'},'lift')
-    .to(c.tilt,{rotationX:0,rotationY:0,duration:.3*D},'lift')
+    .to({},{duration:.85*D},'lift')
+    
     
     ;
   if(opening){
